@@ -1,2 +1,2 @@
 # BetterMinionMountRouletteShared
-Library repo for code shared between BetterMountRoulette and BetterMinionRoulette
+Library for code shared between BetterMountRoulette and BetterMinionRoulette
