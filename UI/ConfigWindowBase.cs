@@ -42,6 +42,13 @@ internal abstract class ConfigWindowBase<TCharConfig, TGroup, TItem, TRegistry, 
     public sealed override void PreDraw()
     {
         base.PreDraw();
+
+        // if the minimum width somehow becomes NaN, fix it.
+        if (float.IsNaN(_windowMinWidth))
+        {
+            _windowMinWidth = 0;
+        }
+
         ImGui.SetNextWindowSizeConstraints(new Vector2(_windowMinWidth, 0), new Vector2(float.MaxValue, float.MaxValue));
     }
     public sealed override void OnClose()
