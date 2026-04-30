@@ -109,11 +109,11 @@ internal abstract class ConfigWindowBase<TCharConfig, TGroup, TItem, TRegistry, 
             100);
     }
 
-    protected static void SelectRouletteGroup(TCharConfig characterConfig, ref string? groupName, ReadOnlySpan<byte> selectGroupLabel)
+    protected static void SelectRouletteGroup(TCharConfig characterConfig, ReadOnlySpan<byte> label, ref string? groupName, ReadOnlySpan<byte> selectGroupLabel)
     {
         bool isEnabled = groupName is not null;
 
-        _ = ImGui.Checkbox("Replace with mount group"u8, ref isEnabled);
+        _ = ImGui.Checkbox(label, ref isEnabled);
 
         if (isEnabled)
         {

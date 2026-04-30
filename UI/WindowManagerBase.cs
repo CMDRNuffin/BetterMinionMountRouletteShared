@@ -122,18 +122,18 @@ internal abstract class WindowManagerBase : IDisposable
 
     protected sealed class WindowStack
     {
-        private readonly List<Window> _windowsToRemove = new();
+        private readonly List<IWindow> _windowsToRemove = new();
         private readonly WindowSystem _windows = new();
 
         public bool HasWindows => _windows.Windows.Count > 0;
 
-        public IReadOnlyList<Window> Windows => _windows.Windows;
+        public IReadOnlyList<IWindow> Windows => _windows.Windows;
 
         public void Draw()
         {
             // clean up closed windows
             // maybe todo: keep windows that we want to keep alive?
-            foreach (Window window in _windowsToRemove)
+            foreach (IWindow window in _windowsToRemove)
             {
                 Remove(window);
             }
@@ -143,7 +143,7 @@ internal abstract class WindowManagerBase : IDisposable
             _windows.Draw();
         }
 
-        public void Remove(Window window)
+        public void Remove(IWindow window)
         {
             if (_windows.Windows.Contains(window))
             {
@@ -163,7 +163,7 @@ internal abstract class WindowManagerBase : IDisposable
             }
         }
 
-        public void Add(Window window)
+        public void Add(IWindow window)
         {
             _windows.AddWindow(window);
         }
