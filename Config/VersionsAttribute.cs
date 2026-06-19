@@ -3,9 +3,15 @@
 using System;
 
 [AttributeUsage(AttributeTargets.Property)]
-internal sealed class VersionsAttribute(int introduced, int removed = 0) : Attribute
+internal sealed class VersionsAttribute : Attribute
 {
-    public int Introduced { get; } = introduced;
+    public VersionsAttribute(int introduced, int removed = 0)
+    {
+        Introduced = introduced;
+        Removed = removed;
+    }
 
-    public int Removed { get; } = removed;
+    public int Introduced { get; }
+
+    public int Removed { get; }
 }

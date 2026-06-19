@@ -15,21 +15,29 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-internal abstract class CharacterManagementRendererBase<TConfig>(
-    IPlayerState playerState,
-    IDalamudPluginInterface dalamudPluginInterface,
-    WindowManagerBase windowManager,
-    ICharacterManager characterManager,
-    TConfig configuration
-)
-    where TConfig : ConfigurationBase
+internal abstract class CharacterManagementRendererBase<TConfig> where TConfig : ConfigurationBase
 {
-    private readonly IPlayerState _playerState = playerState;
-    private readonly IDalamudPluginInterface _dalamudPluginInterface = dalamudPluginInterface;
-    private readonly WindowManagerBase _windowManager = windowManager;
-    private readonly ICharacterManager _characterManager = characterManager;
-    private readonly TConfig _configuration = configuration;
     private ulong? _currentCharacter;
+    private readonly IPlayerState _playerState;
+    private readonly IDalamudPluginInterface _dalamudPluginInterface;
+    private readonly WindowManagerBase _windowManager;
+    private readonly ICharacterManager _characterManager;
+    private readonly TConfig _configuration;
+
+    public CharacterManagementRendererBase(
+        IPlayerState playerState,
+        IDalamudPluginInterface dalamudPluginInterface,
+        WindowManagerBase windowManager,
+        ICharacterManager characterManager,
+        TConfig configuration
+)
+    {
+        _playerState = playerState;
+        _dalamudPluginInterface = dalamudPluginInterface;
+        _windowManager = windowManager;
+        _characterManager = characterManager;
+        _configuration = configuration;
+    }
 
     public void Draw()
     {

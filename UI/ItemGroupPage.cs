@@ -20,12 +20,10 @@ internal abstract class ItemGroupPage<TItem, TGroup, TRegistry>
     where TGroup : IItemGroup
     where TRegistry : ItemRegistry<TItem, TGroup>
 {
-    private readonly TRegistry _itemRegistry;
     private readonly WindowManagerBase _windowManager;
     private readonly ItemRenderer<TItem, TGroup> _itemRenderer;
     private string? _currentItemGroup;
     private ItemGroupPageEnum _mode = ItemGroupPageEnum.Settings;
-
     private string _nameFilter = "";
     private List<TItem>? _filteredItems;
     private (int UnlockedCount, StringView Text) _lastFilter;
@@ -39,11 +37,13 @@ internal abstract class ItemGroupPage<TItem, TGroup, TRegistry>
 
     internal ItemGroupPage(TRegistry itemRegistry, ITextureProvider textureProvider, WindowManagerBase windowManager, string itemName)
     {
-        _itemRegistry = itemRegistry;
+        ItemRegistry = itemRegistry;
         _windowManager = windowManager;
         _itemRenderer = new ItemRenderer<TItem, TGroup>(textureProvider);
         _texts = new(itemName);
     }
+
+    protected TRegistry ItemRegistry { get; }
 
     public void RenderPage(ICharacterConfig<TGroup> characterConfig)
     {
@@ -76,7 +76,7 @@ internal abstract class ItemGroupPage<TItem, TGroup, TRegistry>
             ImGui.EndDisabled();
         }
 
-        List<TItem> unlockedItems = _itemRegistry.GetUnlockedItems();
+        List<TItem> unlockedItems = ItemRegistry.GetUnlockedItems();
         UpdateItemSelectionData(group, unlockedItems, enableNewItems);
 
         ImGui.GetStateStorage().SetInt(ImGui.GetID(_texts.ItemListHeaderLabel), isItemsOpen ? 1 : 0);

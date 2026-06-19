@@ -10,16 +10,22 @@ using Lumina.Text.ReadOnly;
 
 using System.Globalization;
 
-internal abstract class ItemData(ITextureProvider textureProvider, ReadOnlySeString name)
+internal abstract class ItemData
 {
-    private readonly ITextureProvider _textureHelper = textureProvider;
-    private readonly ReadOnlySeString _internalName = name;
+    private readonly ITextureProvider _textureProvider;
+    private readonly ReadOnlySeString _name;
+
+    public ItemData(ITextureProvider textureProvider, ReadOnlySeString name)
+    {
+        _textureProvider = textureProvider;
+        _name = name;
+    }
 
     public uint ID { get; init; }
 
     public uint IconID { get; init; }
 
-    public string Name => field ??= _internalName.ExtractText();
+    public string Name => field ??= _name.ExtractText();
 
     public bool Unlocked { get; set; }
 
@@ -27,7 +33,7 @@ internal abstract class ItemData(ITextureProvider textureProvider, ReadOnlySeStr
 
     public ImTextureID GetIcon()
     {
-        return _textureHelper.LoadIconTexture(IconID);
+        return _textureProvider.LoadIconTexture(IconID);
     }
 
     public abstract bool IsAvailable(Pointer<ActionManager> actionManager);

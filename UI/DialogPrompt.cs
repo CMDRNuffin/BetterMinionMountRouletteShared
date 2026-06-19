@@ -4,11 +4,16 @@ using BetterRouletteBase.UI.Base;
 
 using Dalamud.Bindings.ImGui;
 
-internal sealed class DialogPrompt(string title, string text, WindowManagerBase.ButtonConfig[] buttons)
-    : DialogWindow(title, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)
+internal sealed class DialogPrompt : DialogWindow
 {
-    private readonly string _text = text;
-    private readonly WindowManagerBase.ButtonConfig[] _buttons = buttons;
+    private readonly string _text;
+    private readonly WindowManagerBase.ButtonConfig[] _buttons;
+
+    public DialogPrompt(string title, string text, WindowManagerBase.ButtonConfig[] buttons) : base(title, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)
+    {
+        _text = text;
+        _buttons = buttons;
+    }
 
     public override void Draw()
     {

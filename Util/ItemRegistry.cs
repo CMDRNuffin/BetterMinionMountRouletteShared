@@ -15,17 +15,21 @@ using System.Diagnostics.CodeAnalysis;
 /// Responsible for maintaining a list of mounts with ID, name, icon, and whether or not the mount is unlocked.
 /// </summary>
 [SuppressMessage("Performance", "CA1812", Justification = "Instantiated via reflection")]
-internal abstract class ItemRegistry<TItem, TGroup>(IClientState clientState)
-    where TItem : ItemData
+internal abstract class ItemRegistry<TItem, TGroup> where TItem : ItemData
     where TGroup : IItemGroup
 {
-    private readonly IClientState _clientState = clientState;
+    private readonly IClientState _clientState;
     private readonly Dictionary<uint, TItem> _itemsByID = [];
     private readonly List<TItem> _unlockedItems = [];
     private readonly List<TItem> _availableItems = [];
 
     private bool _isInitialized;
     private readonly object _lock = new();
+
+    public ItemRegistry(IClientState clientState)
+    {
+        _clientState = clientState;
+    }
 
     public int UnlockedItemCount { get; private set; }
 

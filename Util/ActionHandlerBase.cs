@@ -13,22 +13,13 @@ internal abstract class ActionHandlerBase : IDisposable
     private bool _disposedValue;
     private readonly Hook<ActionManager.Delegates.UseAction> _useActionDetour = null!;
 
-    protected unsafe ActionHandlerBase(IGameInteropProvider gameInteropProvider, IPluginLog pluginLog)
+    protected unsafe ActionHandlerBase(IGameInteropProvider gameInteropProvider)
     {
-        PluginLog = pluginLog;
-
-        void* renderAddress = ActionManager.MemberFunctionPointers.UseAction;
-        if (renderAddress is null)
-        {
-            pluginLog.Debug("Unable to load UseAction address");
-            return;
-        }
-
-        _useActionDetour = gameInteropProvider.HookFromAddress<ActionManager.Delegates.UseAction>(renderAddress, UseActionDetour);
+        _useActionDetour = gameInteropProvider.HookFromAddress<ActionManager.Delegates.UseAction>(
+            ActionManager.MemberFunctionPointers.UseAction,
+            UseActionDetour);
         _useActionDetour.Enable();
     }
-
-    protected IPluginLog PluginLog { get; }
 
     protected abstract bool OnUseAction(UseActionArgs args);
 

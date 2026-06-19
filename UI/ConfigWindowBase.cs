@@ -21,10 +21,11 @@ internal abstract class ConfigWindowBase<TCharConfig, TGroup, TItem, TRegistry, 
     private ItemGroupPage<TItem, TGroup, TRegistry>? _itemGroupPage;
     private CharacterManagementRendererBase<TConfig>? _characterManagementPage;
 
-    protected ConfigWindowBase(string name, ImGuiWindowFlags flags = ImGuiWindowFlags.None, bool forceMainWindow = false)
+    public ConfigWindowBase(string name, ImGuiWindowFlags flags = ImGuiWindowFlags.None, bool forceMainWindow = false)
         : base(name, flags, forceMainWindow)
     {
     }
+
     protected abstract void Save();
     protected abstract WindowManagerBase WindowManager { get; }
     protected abstract TRegistry ItemRegistry { get; }
@@ -51,6 +52,7 @@ internal abstract class ConfigWindowBase<TCharConfig, TGroup, TItem, TRegistry, 
 
         ImGui.SetNextWindowSizeConstraints(new Vector2(_windowMinWidth, 0), new Vector2(float.MaxValue, float.MaxValue));
     }
+
     public sealed override void OnClose()
     {
         base.OnClose();

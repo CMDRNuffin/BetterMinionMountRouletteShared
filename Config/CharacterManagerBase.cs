@@ -8,22 +8,23 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 
-internal abstract class CharacterManagerBase<TConfiguration, TCharacterConfig>(
-    IPluginLog pluginLog,
-    IDalamudPluginInterface dalamudPluginInterface,
-    IPlayerState playerState,
-    TConfiguration configuration
-)
-    : ICharacterManager
+internal abstract class CharacterManagerBase<TConfiguration, TCharacterConfig> : ICharacterManager
     where TConfiguration : ConfigurationBase
 {
-    private readonly TConfiguration _configuration = configuration;
+    private readonly TConfiguration _configuration;
+
+    public CharacterManagerBase(IPluginLog pluginLog, IDalamudPluginInterface dalamudPluginInterface, IPlayerState playerState, TConfiguration configuration)
+    {
+        _configuration = configuration;
+        PluginLog = pluginLog;
+        DalamudPluginInterface = dalamudPluginInterface;
+        PlayerState = playerState;
+    }
 
     protected ulong? PlayerID { get; set; }
-
-    protected IPluginLog PluginLog { get; } = pluginLog;
-    protected IDalamudPluginInterface DalamudPluginInterface { get; } = dalamudPluginInterface;
-    protected IPlayerState PlayerState { get; } = playerState;
+    protected IPluginLog PluginLog { get; }
+    protected IDalamudPluginInterface DalamudPluginInterface { get; }
+    protected IPlayerState PlayerState { get; }
     protected TCharacterConfig? CharacterConfig { get; set; }
 
     public bool Import(ulong fromPlayerID)

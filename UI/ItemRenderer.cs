@@ -11,15 +11,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
-internal sealed class ItemRenderer<TItem, TGroup>(ITextureProvider textureProvider)
-    where TItem : ItemData
+internal sealed class ItemRenderer<TItem, TGroup> where TItem : ItemData
     where TGroup : IItemGroup
 {
     private const int PAGE_SIZE = COLUMNS * ROWS;
     private const int COLUMNS = 5;
     private const int ROWS = 6;
 
-    private readonly ITextureProvider _textureProvider = textureProvider;
+    private readonly ITextureProvider _textureProvider;
+
+    public ItemRenderer(ITextureProvider textureProvider)
+    {
+        _textureProvider = textureProvider;
+    }
 
     public void RenderPage(List<TItem> mounts, TGroup group, int page)
     {

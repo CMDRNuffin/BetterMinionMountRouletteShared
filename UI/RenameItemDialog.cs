@@ -11,15 +11,21 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using BetterRouletteBase.Util.Memory;
 
-internal sealed class RenameItemDialog(string title, string initialName, Action<string> onComplete)
-    : DialogWindow(title, ImGuiWindowFlags.AlwaysAutoResize)
+internal sealed class RenameItemDialog : DialogWindow
 {
-    private string _name = initialName;
-    private StringView _normalized = initialName;
-    private readonly Action<string> _onComplete = onComplete;
+    private string _name;
+    private StringView _normalized;
+    private readonly Action<string> _onComplete;
     private Func<StringView, bool>? _validateName;
     private Func<StringView, ReadOnlySpan<byte>>? _getValidationErrors;
     private static Regex? _normalizeWhitespaceRegex;
+
+    public RenameItemDialog(string title, string initialName, Action<string> onComplete) : base(title, ImGuiWindowFlags.AlwaysAutoResize)
+    {
+        _name = initialName;
+        _normalized = initialName;
+        _onComplete = onComplete;
+    }
 
     public bool AllowEmptyName { get; set; }
     public bool NormalizeWhitespace { get; set; }
