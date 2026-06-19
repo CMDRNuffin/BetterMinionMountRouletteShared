@@ -63,6 +63,8 @@ internal abstract class WindowManagerBase : IDisposable
 
     protected abstract Window GetOrCreateConfigWindow(out bool isNew);
 
+    protected abstract Window? TryGetConfigWindow();
+
     public void OpenConfigWindow()
     {
         Window configWindow = GetOrCreateConfigWindow(out bool isNew);
@@ -75,6 +77,15 @@ internal abstract class WindowManagerBase : IDisposable
         {
             configWindow.BringToFront();
         }
+    }
+
+    public void CloseConfigWindow()
+    {
+        Window? configWindow = TryGetConfigWindow();
+
+        // the c# dev kit has a bug where `a?.b = c` is recognized as an expression that has a value,
+        // but not as an assignment expression, so it complains about the value not being used.
+        _ = configWindow?.IsOpen = false;
     }
 
     public void Confirm(string title, string text, params ButtonConfig[] buttons)
