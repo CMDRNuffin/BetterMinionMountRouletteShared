@@ -7,6 +7,9 @@ using Dalamud.Bindings.ImGui;
 using System;
 using System.Collections.Generic;
 
+using Dalamud.Interface.Utility.Raii;
+using ComboDisposable = Dalamud.Interface.Utility.Raii.ImRaii.ComboDisposable;
+
 internal static class ControlHelper
 {
     /// <summary>
@@ -20,25 +23,19 @@ internal static class ControlHelper
 
     public static void Tooltip(bool allowDisabled, ReadOnlySpan<byte> text)
     {
-        if (BeginTooltip(allowDisabled))
+        using ConditionalTooltipDisposable tooltip = Tooltip(allowDisabled);
+        if (tooltip.Success)
         {
             ImGui.Text(text);
-            ImGui.EndTooltip();
         }
     }
 
-    public static bool BeginTooltip(bool allowDisabled = true)
+    public static ConditionalTooltipDisposable Tooltip(bool allowDisabled = true)
     {
         ImGuiHoveredFlags flags = allowDisabled
             ? ImGuiHoveredFlags.AllowWhenDisabled
             : ImGuiHoveredFlags.None;
-        if (ImGui.IsItemHovered(flags))
-        {
-            ImGui.BeginTooltip();
-            return true;
-        }
-
-        return false;
+        return new(ImGui.IsItemHovered(flags));
     }
 
     public static void SelectItem<T>(IEnumerable<T> items, Func<T, string> nameSelector, ref string selectedName, ReadOnlySpan<byte> label, float? width = null)
@@ -48,7 +45,8 @@ internal static class ControlHelper
             ImGui.SetNextItemWidth(ImGuiHelpers.GlobalScale * w);
         }
 
-        if (ImGui.BeginCombo(label, selectedName))
+        using ComboDisposable combo = ImRaii.Combo(label, selectedName);
+        if (combo.Success)
         {
             foreach (T item in items)
             {
@@ -58,8 +56,6 @@ internal static class ControlHelper
                     selectedName = name;
                 }
             }
-
-            ImGui.EndCombo();
         }
     }
 
@@ -70,5 +66,31 @@ internal static class ControlHelper
         part2.CopyTo(res.AsSpan(part1.Length));
         part3.CopyTo(res.AsSpan(part1.Length + part2.Length));
         return res;
+    }
+
+    public ref struct ConditionalTooltipDisposable : IDisposable
+    {
+        public ConditionalTooltipDisposable(bool activate)
+        {
+            if (activate)
+            {
+                ImGui.BeginTooltip();
+            }
+
+            Success = activate;
+        }
+
+        public bool Success { get; private set; }
+
+        public void Dispose()
+        {
+            if (!Success)
+            {
+                return;
+            }
+
+            Success = false;
+            ImGui.EndTooltip();
+        }
     }
 }

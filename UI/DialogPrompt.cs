@@ -3,24 +3,31 @@
 using BetterRouletteBase.UI.Base;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility;
 
 internal sealed class DialogPrompt : DialogWindow
 {
-    private readonly string _text;
+    private readonly string[] _lines;
+    private readonly float[] _widths;
+    private float _largestWidth;
+    private float _lastScale;
     private readonly WindowManagerBase.ButtonConfig[] _buttons;
 
-    public DialogPrompt(string title, string text, WindowManagerBase.ButtonConfig[] buttons) : base(title, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)
+    public DialogPrompt(string title, string text, WindowManagerBase.ButtonConfig[] buttons)
+        : base(title, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings)
     {
-        _text = text;
+        _lines = text.Split('\n');
+        _widths = new float[_lines.Length];
         _buttons = buttons;
+
+        for (int i = 0; i < _lines.Length; ++i)
+        {
+            _lines[i] = _lines[i].Trim();
+        }
     }
 
-    public override void Draw()
+    protected override void DrawImpl()
     {
-        string[] lines = _text.Split('\n');
-        float[] widths = new float[lines.Length];
-        float largestWidth = 0;
-
         // step 1: reserve width so stuff like
         //   > short line
         //   > very long line that stretches the window beyond what the title bar requires
@@ -29,24 +36,29 @@ internal sealed class DialogPrompt : DialogWindow
         // maybe idea for the future to also allow centering when the buttons are longer than the text:
         //   render buttons before text (store cursor pos, reserve entire text rectangle instead of width,
         //   draw buttons, restore cursor, draw text)
-        for (int i = 0; i < lines.Length; i++)
+        if (_lastScale == ImGuiHelpers.GlobalScale)
         {
-            lines[i] = lines[i].Trim();
-            float width = ImGui.CalcTextSize(lines[i]).X + 10;
-            widths[i] = width;
-            if (width > largestWidth)
+            for (int i = 0; i < _lines.Length; i++)
             {
-                largestWidth = width;
+                float width = ImGui.CalcTextSize(_lines[i]).X + 10;
+                _widths[i] = width;
+                if (width > _largestWidth)
+                {
+                    _largestWidth = width;
+                }
             }
+
+            // ensure the init code doesn't run again
+            _lastScale = ImGuiHelpers.GlobalScale;
         }
 
-        ImGui.Dummy(new(largestWidth, 0));
+        ImGui.Dummy(new(_largestWidth, 0));
 
         // step 2: actually draw the lines
-        for (int i = 0; i < lines.Length; i++)
+        for (int i = 0; i < _lines.Length; i++)
         {
-            CenterText(widths[i]);
-            ImGui.Text(lines[i]);
+            CenterText(_widths[i]);
+            ImGui.Text(_lines[i]);
         }
 
         bool hasButton = false;

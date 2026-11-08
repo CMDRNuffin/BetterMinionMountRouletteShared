@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Plugin;
+using Dalamud.Interface.Utility.Raii;
 
 internal abstract class WindowManagerBase : IDisposable
 {
@@ -28,9 +29,10 @@ internal abstract class WindowManagerBase : IDisposable
 
     public void Draw()
     {
-        ImGui.BeginDisabled(InternalDialogs.HasWindows);
-        InternalWindows.Draw();
-        ImGui.EndDisabled();
+        using (ImRaii.Disabled(InternalDialogs.HasWindows))
+        {
+            InternalWindows.Draw();
+        }
 
         InternalDialogs.Draw();
     }

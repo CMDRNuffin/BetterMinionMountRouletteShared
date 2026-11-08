@@ -11,6 +11,8 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using BetterRouletteBase.Util.Memory;
 
+using Dalamud.Interface.Utility.Raii;
+
 internal sealed class RenameItemDialog : DialogWindow
 {
     private string _name;
@@ -36,7 +38,7 @@ internal sealed class RenameItemDialog : DialogWindow
         _getValidationErrors = getValidationErrors;
     }
 
-    public override void Draw()
+    protected override void DrawImpl()
     {
         ImGui.Text("Name:"u8);
         ImGui.SameLine();
@@ -47,14 +49,14 @@ internal sealed class RenameItemDialog : DialogWindow
 
         bool nameIsInvalid = !ValidateNameImpl();
 
-        ImGui.BeginDisabled(nameIsInvalid);
-        if (ImGui.Button("Save"u8))
+        using (ImRaii.Disabled(nameIsInvalid))
         {
-            _onComplete(_name);
-            IsOpen = false;
+            if (ImGui.Button("Save"u8))
+            {
+                _onComplete(_name);
+                IsOpen = false;
+            }
         }
-
-        ImGui.EndDisabled();
 
         ImGui.SameLine();
         if (ImGui.Button("Cancel"u8))

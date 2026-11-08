@@ -4,6 +4,7 @@ using BetterRouletteBase.Config;
 using BetterRouletteBase.Util;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 
@@ -14,6 +15,9 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+
+using ListBoxDisposable = Dalamud.Interface.Utility.Raii.ImRaii.ListBoxDisposable;
+using DisabledDisposable = Dalamud.Interface.Utility.Raii.ImRaii.DisabledDisposable;
 
 internal abstract class CharacterManagementRendererBase<TConfig> where TConfig : ConfigurationBase
 {
@@ -44,29 +48,31 @@ internal abstract class CharacterManagementRendererBase<TConfig> where TConfig :
         PluginSpecificSettings(_configuration);
 
         ImGui.Text("Existing characters"u8);
-        if (!ImGui.BeginListBox("##Characters"u8))
-        {
-            return;
-        }
-
         ReadOnlySpan<byte> selectedCharacterName = null;
-        foreach (KeyValuePair<ulong, CharacterConfigEntry> character in _configuration.CharacterConfigs.OrderBy(x => x.Key))
+        using (ListBoxDisposable listBox = ImRaii.ListBox("##Characters"u8))
         {
-            ReadOnlySpan<byte> text = StringCache.Characters[character.Key, () => FormatCharacter(character.Value)];
-
-            if (ImGui.Selectable(text, _currentCharacter == character.Key))
+            if (!listBox.Success)
             {
-                Util.Toggle(ref _currentCharacter, character.Key);
+                return;
             }
 
-            if (_currentCharacter == character.Key)
+            foreach (KeyValuePair<ulong, CharacterConfigEntry> character in _configuration.CharacterConfigs.OrderBy(x => x.Key))
             {
-                selectedCharacterName = text;
+                ReadOnlySpan<byte> text = StringCache.Characters[character.Key, () => FormatCharacter(character.Value)];
+
+                if (ImGui.Selectable(text, _currentCharacter == character.Key))
+                {
+                    Util.Toggle(ref _currentCharacter, character.Key);
+                }
+
+                if (_currentCharacter == character.Key)
+                {
+                    selectedCharacterName = text;
+                }
             }
         }
 
-        ImGui.EndListBox();
-        ImGui.BeginDisabled(_currentCharacter is null || _currentCharacter == _playerState.ContentId);
+        using DisabledDisposable _ = ImRaii.Disabled(_currentCharacter is null || _currentCharacter == _playerState.ContentId);
 
         if (ImGui.Button("Import"))
         {
@@ -81,7 +87,7 @@ internal abstract class CharacterManagementRendererBase<TConfig> where TConfig :
 
         ImGui.SameLine();
 
-        ImGui.BeginDisabled(IsPredefinedEntry(_currentCharacter));
+        using DisabledDisposable __ = ImRaii.Disabled(IsPredefinedEntry(_currentCharacter));
         if (ImGui.Button("Delete"))
         {
             Debug.Assert(_currentCharacter is not null);
@@ -103,9 +109,6 @@ internal abstract class CharacterManagementRendererBase<TConfig> where TConfig :
             ImGui.SameLine();
             ImGui.Text("You cannot import from or delete the currently active character."u8);
         }
-
-        ImGui.EndDisabled();
-        ImGui.EndDisabled();
     }
 
     protected virtual void PluginSpecificSettings(TConfig configuration)

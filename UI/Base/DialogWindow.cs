@@ -3,6 +3,8 @@
 using Dalamud.Interface.Windowing;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility.Raii;
+using DisabledDisposable = Dalamud.Interface.Utility.Raii.ImRaii.DisabledDisposable;
 
 internal abstract class DialogWindow : Window
 {
@@ -34,15 +36,11 @@ internal abstract class DialogWindow : Window
 
     public bool IsEnabled { get; set; } = true;
 
-    public override void PreDraw()
+    public sealed override void Draw()
     {
-        base.PreDraw();
-        ImGui.BeginDisabled(!IsEnabled);
+        using DisabledDisposable _ = ImRaii.Disabled(!IsEnabled);
+        DrawImpl();
     }
 
-    public override void PostDraw()
-    {
-        ImGui.EndDisabled();
-        base.PostDraw();
-    }
+    protected abstract void DrawImpl();
 }

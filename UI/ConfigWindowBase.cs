@@ -4,11 +4,15 @@ using BetterRouletteBase.Config;
 using BetterRouletteBase.Util;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
 using System;
 using System.Linq;
 using System.Numerics;
+
+using TabBarDisposable = Dalamud.Interface.Utility.Raii.ImRaii.TabBarDisposable;
+using TabItemDisposable = Dalamud.Interface.Utility.Raii.ImRaii.TabItemDisposable;
 
 internal abstract class ConfigWindowBase<TCharConfig, TGroup, TItem, TRegistry, TConfig> : Window
     where TCharConfig : ICharacterConfig<TGroup>
@@ -44,13 +48,16 @@ internal abstract class ConfigWindowBase<TCharConfig, TGroup, TItem, TRegistry, 
     {
         base.PreDraw();
 
-        // if the minimum width somehow becomes NaN, fix it.
-        if (float.IsNaN(_windowMinWidth))
+        // if the minimum width somehow becomes NaN/Infinity, fix it.
+        if (float.IsNaN(_windowMinWidth) || float.IsInfinity(_windowMinWidth))
         {
             _windowMinWidth = 0;
         }
 
-        ImGui.SetNextWindowSizeConstraints(new Vector2(_windowMinWidth, 0), new Vector2(float.MaxValue, float.MaxValue));
+        if (_windowMinWidth > 0)
+        {
+            ImGui.SetNextWindowSizeConstraints(new Vector2(_windowMinWidth, 0), new Vector2(float.MaxValue, float.MaxValue));
+        }
     }
 
     public sealed override void OnClose()
@@ -62,17 +69,23 @@ internal abstract class ConfigWindowBase<TCharConfig, TGroup, TItem, TRegistry, 
 
     public sealed override void Draw()
     {
-        if (CharacterConfig is not TCharConfig characterConfig)
+        switch (CharacterConfig)
         {
-            ImGui.Text("Please log in first"u8);
-        }
-        else if (ImGui.BeginTabBar("settings"u8))
-        {
-            Tab("General"u8, characterConfig, GeneralConfigTab);
-            Tab(ItemGroupsTabName, characterConfig, RenderItemGroupPage);
-            Tab("Character Management"u8, characterConfig, RenderCharacterManagementPage);
+            case TCharConfig characterConfig:
+            {
+                using TabBarDisposable tabBar = ImRaii.TabBar("settings"u8);
+                if (tabBar.Success)
+                {
+                    Tab("General"u8, characterConfig, GeneralConfigTab);
+                    Tab(ItemGroupsTabName, characterConfig, RenderItemGroupPage);
+                    Tab("Character Management"u8, characterConfig, RenderCharacterManagementPage);
+                }
 
-            ImGui.EndTabBar();
+                break;
+            }
+            default:
+                ImGui.Text("Please log in first"u8);
+                break;
         }
 
         _windowMinWidth = ImGui.GetWindowWidth();
@@ -92,10 +105,10 @@ internal abstract class ConfigWindowBase<TCharConfig, TGroup, TItem, TRegistry, 
 
     private static void Tab(ReadOnlySpan<byte> name, TCharConfig characterConfig, Action<TCharConfig> contentSelector)
     {
-        if (ImGui.BeginTabItem(name))
+        using TabItemDisposable tabItem = ImRaii.TabItem(name);
+        if (tabItem.Success)
         {
             contentSelector(characterConfig);
-            ImGui.EndTabItem();
         }
     }
 

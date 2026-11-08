@@ -14,6 +14,11 @@ using Dalamud.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+
+using DisabledDisposable = Dalamud.Interface.Utility.Raii.ImRaii.DisabledDisposable;
+using TabBarDisposable = Dalamud.Interface.Utility.Raii.ImRaii.TabBarDisposable;
+using TabItemDisposable = Dalamud.Interface.Utility.Raii.ImRaii.TabItemDisposable;
 
 internal abstract class ItemGroupPage<TItem, TGroup, TRegistry>
     where TItem : ItemData
@@ -64,26 +69,18 @@ internal abstract class ItemGroupPage<TItem, TGroup, TRegistry>
         bool enableNewItems = !group.IncludedMeansActive;
 
         ImGui.GetStateStorage().SetInt(ImGui.GetID("Settings"u8), isSettingsOpen ? 1 : 0);
-        ImGui.BeginDisabled(isSettingsOpen);
-        if (ImGui.CollapsingHeader("Settings"u8))
+        if (DisabledHeader(isSettingsOpen, "Settings"u8))
         {
-            ImGui.EndDisabled();
             isSettingsOpen = true;
             RenderGroupSettings(group, ref enableNewItems);
-        }
-        else
-        {
-            ImGui.EndDisabled();
         }
 
         List<TItem> unlockedItems = ItemRegistry.GetUnlockedItems();
         UpdateItemSelectionData(group, unlockedItems, enableNewItems);
 
         ImGui.GetStateStorage().SetInt(ImGui.GetID(_texts.ItemListHeaderLabel), isItemsOpen ? 1 : 0);
-        ImGui.BeginDisabled(isItemsOpen);
-        if (ImGui.CollapsingHeader(_texts.ItemListHeaderLabel))
+        if (DisabledHeader(isItemsOpen, _texts.ItemListHeaderLabel))
         {
-            ImGui.EndDisabled();
             isItemsOpen = true;
 
             StringView nameFilter = new();
@@ -103,24 +100,23 @@ internal abstract class ItemGroupPage<TItem, TGroup, TRegistry>
                         : _texts.NoItemsInFilterLabel
                 );
             }
-            else if (ImGui.BeginTabBar(_texts.PagesTabBarId))
+            else
             {
-                for (int page = 1; page <= pages; page++)
+                using TabBarDisposable tabBar = ImRaii.TabBar(_texts.PagesTabBarId);
+                if (tabBar.Success)
                 {
-                    if (ImGui.BeginTabItem(StringCache.Pages[page, () => $"{page}"]))
+                    for (int page = 1; page <= pages; page++)
                     {
-                        RenderItemListPage(page, group, filteredAndUnlockedItems);
-                        ImGui.EndTabItem();
+                        using TabItemDisposable tabItem = ImRaii.TabItem(StringCache.Pages[page, () => $"{page}"]);
+                        if (tabItem.Success)
+                        {
+                            RenderItemListPage(page, group, filteredAndUnlockedItems);
+                        }
                     }
-                }
 
-                ImGui.SameLine();
-                ImGui.EndTabBar();
+                    ImGui.SameLine();
+                }
             }
-        }
-        else
-        {
-            ImGui.EndDisabled();
         }
 
         switch (_mode)
@@ -141,6 +137,12 @@ internal abstract class ItemGroupPage<TItem, TGroup, TRegistry>
         }
     }
 
+    private static bool DisabledHeader(bool disabled, ReadOnlySpan<byte> label)
+    {
+        using DisabledDisposable _ = ImRaii.Disabled(disabled);
+        return ImGui.CollapsingHeader(label);
+    }
+
     private StringView DrawNameFilter()
     {
         ImGui.SetNextItemWidth(250);
@@ -153,14 +155,7 @@ internal abstract class ItemGroupPage<TItem, TGroup, TRegistry>
             _nameFilter = string.Empty;
         }
 
-        if (ImGui.IsItemHovered())
-        {
-            using (ImRaii.Tooltip())
-            {
-                ImGui.SetTooltip("Clear name filter"u8);
-            }
-        }
-
+        ControlHelper.Tooltip(allowDisabled: false, "Clear name filter"u8);
         return new StringView(_nameFilter).Trim();
     }
 
@@ -363,13 +358,18 @@ internal abstract class ItemGroupPage<TItem, TGroup, TRegistry>
 
 internal readonly struct ItemGroupPageTexts(string itemName)
 {
-    public readonly string ItemListHeaderLabel = char.ToUpperInvariant(itemName[0]) + itemName[1..];
-    public readonly string NoItemsUnlockedLabel = $"Please unlock at least one {itemName}.";
-    public readonly string NoItemsInFilterLabel = $"No {itemName}s match the current filter.";
-    public readonly string PagesTabBarId = $"{itemName}_pages";
-    public readonly string ItemName = itemName;
+    public readonly byte[] ItemListHeaderLabel = Bytes(char.ToUpperInvariant(itemName[0]) + itemName[1..]);
+    public readonly byte[] NoItemsUnlockedLabel = Bytes($"Please unlock at least one {itemName}.");
+    public readonly byte[] NoItemsInFilterLabel = Bytes($"No {itemName}s match the current filter.");
+    public readonly byte[] PagesTabBarId = Bytes($"{itemName}_pages");
+    public readonly byte[] ItemName = Bytes(itemName);
     public readonly string AllSelectedItemsLabel = $"currently selected {itemName}s";
     public readonly string AllUnselectedItemsLabel = $"currently unselected {itemName}s";
     public readonly string CurrentPageItemsLabel = $"{itemName}s on the current page";
-    public readonly string EnableNewItemsLabel = $"Enable new {itemName}s on unlock";
+    public readonly byte[] EnableNewItemsLabel = Bytes($"Enable new {itemName}s on unlock");
+
+    public static byte[] Bytes(string text)
+    {
+        return Encoding.UTF8.GetBytes(text);
+    }
 }
